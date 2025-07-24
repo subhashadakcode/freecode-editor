@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreeCODE-Editor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --success: #06d6a0;
+            --danger: #ef476f;
+            --warning: #ffd166;
+            --dark: #1a1a2e;
+            --darker: #0f0f1b;
+            --light: #f8f9fa;
+            --gray: #adb5bd;
+            --editor-bg: #2d2d2d;
+            --editor-text: #e0e0e0;
+            --panel-bg: #252536;
+            --border: #3a3a5a;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background-color: var(--darker);
+            color: var(--light);
+            height: 100vh;
+            overflow: hidden;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            z-index: 100;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo i {
+            color: white;
+            font-size: 2rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            color: white;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 18px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.95rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .btn-primary {
+            background: white;
+            color: var(--primary);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: var(--dark);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(-1px);
+        }
+        
+        /* Main Editor Area */
+        .editor-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+            min-width: 0;
+            background: var(--panel-bg);
+        }
+        
+        .panel:last-child {
+            border-right: none;
+        }
+        
+        .panel-header {
+            background: rgba(0,0,0,0.2);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .panel-header h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .panel-header i {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+        
+        .editor {
+            flex: 1;
+            background: var(--editor-bg);
+            color: var(--editor-text);
+            border: none;
+            resize: none;
+            padding: 18px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 15px;
+            tab-size: 4;
+            outline: none;
+            line-height: 1.6;
+        }
+        
+        .editor:focus {
+            box-shadow: inset 0 0 0 2px var(--primary);
+        }
+        
+        /* Preview Panel */
+        .preview-container {
+            flex: 1;
+            background: white;
+            overflow: auto;
+        }
+        
+        #preview {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .editor-container {
+                flex-direction: column;
+            }
+            
+            .panel {
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+            
+            .panel:last-child {
+                border-bottom: none;
+            }
+            
+            .logo h1 {
+                font-size: 1.5rem;
+            }
+            
+            .btn {
+                padding: 8px 14px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            header {
+                padding: 10px 15px;
+            }
+            
+            .logo {
+                gap: 8px;
+            }
+            
+            .logo i {
+                font-size: 1.6rem;
+            }
+            
+            .logo h1 {
+                font-size: 1.3rem;
+            }
+            
+            .controls {
+                gap: 8px;
+            }
+            
+            .btn {
+                padding: 7px 12px;
+                font-size: 0.85rem;
+                gap: 6px;
+            }
+            
+            .panel-header {
+                padding: 10px 14px;
+            }
+            
+            .panel-header h3 {
+                font-size: 1rem;
+            }
+            
+            .editor {
+                padding: 14px;
+                font-size: 14px;
+            }
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--dark);
+            padding: 15px 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .copyright {
+            font-size: 0.95rem;
+            color: var(--light);
+        }
+        
+        .copyright span {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .footer-links {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .footer-links a {
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .footer-links {
+                gap: 15px;
+            }
+        }
+        
+        /* Loading Animation */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 15, 27, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Status Bar */
+        .status-bar {
+            background: var(--dark);
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            color: var(--gray);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        /* Mobile Controls */
+        .mobile-controls {
+            display: none;
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 100;
+        }
+        
+        .mobile-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .mobile-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+        }
+        
+        @media (max-width: 992px) {
+            .mobile-controls {
+                display: flex;
+            }
+            
+            .desktop-controls {
+                display: none;
+            }
+        }
+        
+        /* Enhanced Editor Styling */
+        .editor::placeholder {
+            color: #888;
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <i class="fas fa-laptop-code"></i>
+                <h1>FreeCODE-Editor</h1>
+            </div>
+            <div class="controls desktop-controls">
+                <button class="btn btn-primary" id="runBtn">
+                    <i class="fas fa-play"></i> Run Code
+                </button>
+                <button class="btn btn-success" id="saveBtn">
+                    <i class="fas fa-download"></i> Save Project
+                </button>
+                <button class="btn btn-warning" id="resetBtn">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+                <button class="btn btn-danger" id="clearBtn">
+                    <i class="fas fa-broom"></i> Clear All
+                </button>
+            </div>
+        </header>
+        
+        <!-- Main Editor Area -->
+        <div class="editor-container">
+            <!-- HTML Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3><i class="fab fa-html5"></i> HTML</h3>
+                </div>
+                <textarea id="htmlEditor" class="editor" placeholder="Enter your HTML code here..."><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Awesome Project</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to FreeCODE-Editor</h1>
+        <p>Create amazing web projects with this free online editor!</p>
+        <button id="colorBtn">Change Background</button>
+        <div class="box">
+            <h2>Features</h2>
+            <ul>
+                <li>Real-time preview</li>
+                <li>Responsive design</li>
+                <li>Lightweight and fast</li>
+                <li>Works on all devices</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html></textarea>
+            </div>
+            
+            <!-- CSS Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3><i class="fab fa-css3-alt"></i> CSS</h3>
+                </div>
+                <textarea id="cssEditor" class="editor" placeholder="Enter your CSS code here...">* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin: 30px 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+#colorBtn {
+    background: rgba(255,255,255,0.2);
+    border: 2px solid white;
+    color: white;
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 40px;
+    backdrop-filter: blur(5px);
+}
+
+#colorBtn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.box {
+    background: rgba(255,255,255,0.1);
+    border-radius: 15px;
+    padding: 25px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+h2 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+}
+
+ul {
+    list-style: none;
+    text-align: left;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+li {
+    padding: 10px 0;
+    font-size: 1.1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+li:before {
+    content: "✓";
+    color: #06d6a0;
+    display: inline-block;
+    width: 20px;
+    margin-right: 10px;
+}</textarea>
+            </div>
+            
+            <!-- JavaScript Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3><i class="fab fa-js"></i> JavaScript</h3>
+                </div>
+                <textarea id="jsEditor" class="editor" placeholder="Enter your JavaScript code here...">document.addEventListener('DOMContentLoaded', function() {
+    const colorBtn = document.getElementById('colorBtn');
+    
+    if (colorBtn) {
+        colorBtn.addEventListener('click', function() {
+            const gradients = [
+                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)'
+            ];
+            
+            const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
+            document.body.style.background = randomGradient;
+        });
+    }
+    
+    // Add animation to elements
+    const elements = document.querySelectorAll('h1, p, h2, li');
+    elements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, 300 + (index * 100));
+    });
+});</textarea>
+            </div>
+            
+            <!-- Preview Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3><i class="fas fa-eye"></i> Live Preview</h3>
+                </div>
+                <div class="preview-container">
+                    <iframe id="preview"></iframe>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div id="status">Ready to code</div>
+            <div id="charCount">Total characters: 0</div>
+        </div>
+        
+        <!-- Footer -->
+        <footer>
+            <div class="footer-content">
+                <div class="copyright">
+                    &copy; 2023 <span>FreeCODE-Editor</span> | Created by <span>Subhash Adak</span>. All rights reserved.
+                </div>
+                <div class="footer-links">
+                    <a href="#"><i class="fas fa-info-circle"></i> About Us</a>
+                    <a href="#"><i class="fas fa-envelope"></i> Contact</a>
+                    <a href="#"><i class="fas fa-question-circle"></i> Help</a>
+                    <a href="#"><i class="fas fa-shield-alt"></i> Privacy</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Mobile Controls -->
+    <div class="mobile-controls">
+        <div class="mobile-btn" id="mobileRunBtn" title="Run Code">
+            <i class="fas fa-play"></i>
+        </div>
+        <div class="mobile-btn" id="mobileSaveBtn" title="Save Project">
+            <i class="fas fa-download"></i>
+        </div>
+    </div>
+    
+    <!-- Loading Screen -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+    
+    <!-- Notification -->
+    <div class="notification" id="notification">Project saved successfully!</div>
+
+    <script>
+        // DOM Elements
+        const htmlEditor = document.getElementById('htmlEditor');
+        const cssEditor = document.getElementById('cssEditor');
+        const jsEditor = document.getElementById('jsEditor');
+        const preview = document.getElementById('preview');
+        const runBtn = document.getElementById('runBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const loading = document.getElementById('loading');
+        const status = document.getElementById('status');
+        const charCount = document.getElementById('charCount');
+        const mobileRunBtn = document.getElementById('mobileRunBtn');
+        const mobileSaveBtn = document.getElementById('mobileSaveBtn');
+        const notification = document.getElementById('notification');
+        
+        // State
+        let debounceTimer;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                loading.style.display = 'none';
+                updatePreview();
+                updateCharCount();
+                showNotification('Welcome to FreeCODE-Editor!');
+            }, 1000);
+        });
+        
+        // Update Preview Function
+        function updatePreview() {
+            status.textContent = 'Updating preview...';
+            const html = htmlEditor.value;
+            const css = cssEditor.value;
+            const js = jsEditor.value;
+            
+            const fullHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>${css}</style>
+                </head>
+                <body>
+                    ${html}
+                    <script>${js}<\/script>
+                </body>
+                </html>
+            `;
+            
+            const iframeDoc = preview.contentDocument || preview.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write(fullHtml);
+            iframeDoc.close();
+            
+            status.textContent = 'Preview updated';
+            setTimeout(() => {
+                status.textContent = 'Ready to code';
+            }, 2000);
+        }
+        
+        // Update Character Count
+        function updateCharCount() {
+            const totalChars = htmlEditor.value.length + cssEditor.value.length + jsEditor.value.length;
+            charCount.textContent = `Total characters: ${totalChars.toLocaleString()}`;
+        }
+        
+        // Show Notification
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Event Listeners
+        runBtn.addEventListener('click', () => {
+            loading.style.display = 'flex';
+            setTimeout(() => {
+                updatePreview();
+                loading.style.display = 'none';
+            }, 300);
+        });
+        
+        mobileRunBtn.addEventListener('click', () => {
+            loading.style.display = 'flex';
+            setTimeout(() => {
+                updatePreview();
+                loading.style.display = 'none';
+                showNotification('Preview updated!');
+            }, 300);
+        });
+        
+        saveBtn.addEventListener('click', () => {
+            const data = {
+                html: htmlEditor.value,
+                css: cssEditor.value,
+                js: jsEditor.value
+            };
+            
+            const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'freecode-project.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Project saved successfully!');
+        });
+        
+        mobileSaveBtn.addEventListener('click', () => {
+            const data = {
+                html: htmlEditor.value,
+                css: cssEditor.value,
+                js: jsEditor.value
+            };
+            
+            const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'freecode-project.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Project saved!');
+        });
+        
+        resetBtn.addEventListener('click', () => {
+            if(confirm('Are you sure you want to reset to the default example?')) {
+                loading.style.display = 'flex';
+                setTimeout(() => {
+                    htmlEditor.value = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Awesome Project</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to FreeCODE-Editor</h1>
+        <p>Create amazing web projects with this free online editor!</p>
+        <button id="colorBtn">Change Background</button>
+        <div class="box">
+            <h2>Features</h2>
+            <ul>
+                <li>Real-time preview</li>
+                <li>Responsive design</li>
+                <li>Lightweight and fast</li>
+                <li>Works on all devices</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>`;
+                    
+                    cssEditor.value = `* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin: 30px 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+#colorBtn {
+    background: rgba(255,255,255,0.2);
+    border: 2px solid white;
+    color: white;
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 40px;
+    backdrop-filter: blur(5px);
+}
+
+#colorBtn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.box {
+    background: rgba(255,255,255,0.1);
+    border-radius: 15px;
+    padding: 25px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+h2 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+}
+
+ul {
+    list-style: none;
+    text-align: left;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+li {
+    padding: 10px 0;
+    font-size: 1.1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+li:before {
+    content: "✓";
+    color: #06d6a0;
+    display: inline-block;
+    width: 20px;
+    margin-right: 10px;
+}`;
+                    
+                    jsEditor.value = `document.addEventListener('DOMContentLoaded', function() {
+    const colorBtn = document.getElementById('colorBtn');
+    
+    if (colorBtn) {
+        colorBtn.addEventListener('click', function() {
+            const gradients = [
+                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)'
+            ];
+            
+            const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
+            document.body.style.background = randomGradient;
+        });
+    }
+    
+    // Add animation to elements
+    const elements = document.querySelectorAll('h1, p, h2, li');
+    elements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, 300 + (index * 100));
+    });
+});`;
+                    
+                    updatePreview();
+                    updateCharCount();
+                    loading.style.display = 'none';
+                    showNotification('Reset to default example');
+                }, 500);
+            }
+        });
+        
+        clearBtn.addEventListener('click', () => {
+            if(confirm('Are you sure you want to clear all editors?')) {
+                htmlEditor.value = '';
+                cssEditor.value = '';
+                jsEditor.value = '';
+                updatePreview();
+                updateCharCount();
+                showNotification('All editors cleared');
+            }
+        });
+        
+        // Auto-update preview on typing (with debounce)
+        [htmlEditor, cssEditor, jsEditor].forEach(editor => {
+            editor.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    updatePreview();
+                }, 800);
+                updateCharCount();
+            });
+        });
+        
+        // Initial preview update
+        updatePreview();
+    </script>
+</body>
+</html>
